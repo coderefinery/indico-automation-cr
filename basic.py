@@ -36,28 +36,34 @@ assert len(user_map) == len(table)
 def confirm_users(users):
     driver.get(EVENT_REG)
     for user in users:
+        if driver.find_elements_by_xpath(f'//table[contains(@class, "i-table")]//tr/td[normalize-space(.)="#{user}"]/..//td[.="Completed"]'):
+            # User already completed
+            continue
         driver.find_element_by_xpath(f'//table[contains(@class, "i-table")]//tr/td[normalize-space(.)="#{user}"]/..//input[@class="select-row"]').click()
 
-def update_person(id_, type=None):
+def update_person(id_, type=None, room=None):
 
-    driver.get(EVENT_REG + '%s/edit'%user_map[209])
+    driver.get(EVENT_REG + '%s/edit'%user_map[id_])
+
+    #labels = driver.find_elements_by_css_selector('label')
+    label_map = {l.text: l for l in labels}
 
     # Turn off mail
     email_status = driver.find_element_by_xpath('//input[@id="send-notification"]').get_attribute('value')
     if email_status == 'y':
         driver.find_element_by_xpath('//input[@id="send-notification"]/..').click()
 
-
-    #labels = driver.find_elements_by_css_selector('label')
-    label_map = {l.text: l for l in labels}
-
     # Set learner status
     if type:
-        new_type = "Exe"
-        driver.find_element_by_xpath('//label[contains(., "Type")]/../../following::td//select').send_keys(new_type)
+        driver.find_element_by_xpath('//label[contains(., "Type")]/../../following::td//select').send_keys(type)
+
+    # Set room
+    if room:
+        driver.find_element_by_xpath('//label[contains(., "Room")]/../../following::td//input').clear()
+        driver.find_element_by_xpath('//label[contains(., "Room")]/../../following::td//input').send_keys(str(room))
 
     # Submit
-    driver.find_element_by_xpath('//input[@type="submit"]').submit()
+    #driver.find_element_by_xpath('//input[@type="submit"]').submit()
 
 data = pd.read_excel('~/Downloads/registrations.xlsx')
 
