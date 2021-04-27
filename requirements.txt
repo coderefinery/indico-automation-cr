@@ -1,0 +1,4 @@
+# apt: chromium-driver
+selenium
+pandas
+openpyxl
