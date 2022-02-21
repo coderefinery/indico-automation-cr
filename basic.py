@@ -4,12 +4,14 @@ EVENT_REG = 'https://indico.neic.no/event/178/manage/registration/85/registratio
 import os
 import re
 
+import pandas as pd
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 
-if 'driver' not in globals():
-
+def init():
+    global driver
     driver = webdriver.Chrome()
     driver.get('https://indico.neic.no')
 
@@ -20,31 +22,38 @@ if 'driver' not in globals():
     driver.find_element_by_name('password').send_keys(pwd)
     driver.find_element_by_name('password').send_keys(Keys.RETURN)
 
+    driver.get(EVENT_REG)
+    table = driver.find_elements_by_css_selector('table.i-table tbody tr')
 
-driver.get(EVENT_REG)
-table = driver.find_elements_by_css_selector('table.i-table tbody tr')
+    # Find #209 as a test
+    global user_map
+    user_map = { }
+    for row in table:
+        #if row.text.startswith('#209'):
+        #    print(row)
+        id = re.match(r'#(\d+) ', row.text).group(1)
+        print(id)
+        user_map[int(id)] = int(row.get_attribute('id').split('-')[-1])
 
-# Find #209 as a test
-user_map = { }
-for row in table:
-    #if row.text.startswith('#209'):
-    #    print(row)
-    id = re.match(r'#(\d+) ', row.text).group(1)
-    print(id)
-    user_map[int(id)] = int(row.get_attribute('id').split('-')[-1])
-
-assert len(user_map) == len(table)
+    assert len(user_map) == len(table)
 
 
-def confirm_users(users):
+if 'driver' not in globals():
+    init()
+
+
+
+
+def select_users(users):
     driver.get(EVENT_REG)
     for user in users:
         if driver.find_elements_by_xpath(f'//table[contains(@class, "i-table")]//tr/td[normalize-space(.)="#{user}"]/..//td[.="Completed"]'):
             # User already completed
             continue
         driver.find_element_by_xpath(f'//table[contains(@class, "i-table")]//tr/td[normalize-space(.)="#{user}"]/..//input[@class="select-row"]').click()
+    print("\n\n\nYou must now go to Moderation -> Approve to do the confirmation (if that is what you want to do\n\n")
 
-def update_person(id_, type=None, room=None):
+def update_person(id_, type=None, room=None, noconfirm=False):
 
     driver.get(EVENT_REG + '%s/edit'%user_map[id_])
 
@@ -77,12 +86,14 @@ def update_person(id_, type=None, room=None):
         driver.find_element_by_xpath('//label[contains(., "Room")]/../../following::td//input').send_keys(str(room))
 
     # Submit
-    choice = input('save [y/n/b] ? ')
-    if choice == 'y':
+    print(noconfirm)
+    if not noconfirm:
+        choice = input('save [y/n/b/a] ? ')
+    if noconfirm or choice == 'y':
         driver.find_element_by_xpath('//input[@type="submit"]').submit()
-    if choice == 'b':
+    elif choice == 'b':
         return 'break'
 
-data = pd.read_excel('~/Downloads/registrations.xlsx')
+data = pd.read_excel('~/mnt/kosh/registrations.xlsx')
 
 #driver.quit()
