@@ -16,10 +16,11 @@ def init():
     driver.get('https://indico.neic.no')
 
     # Login
+    username = open(os.path.expanduser('~/mnt/encrypted/coderefinery')).readlines()[1].strip()
+    password = open(os.path.expanduser('~/mnt/encrypted/coderefinery')).readlines()[2].strip()
     driver.get('https://indico.neic.no/login/')
-    driver.find_element_by_name('identifier').send_keys('rkdarst')
-    pwd = open(os.path.expanduser('~/mnt/encrypted/coderefinery')).readlines()[2].strip()
-    driver.find_element_by_name('password').send_keys(pwd)
+    driver.find_element_by_name('identifier').send_keys(username)
+    driver.find_element_by_name('password').send_keys(password)
     driver.find_element_by_name('password').send_keys(Keys.RETURN)
 
     driver.get(EVENT_REG)
